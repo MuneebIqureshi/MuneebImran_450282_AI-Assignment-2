@@ -1,0 +1,227 @@
+<html>
+<head>
+<title>AStar_Search_Manhattan[1].cpp</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #b3ae60;}
+.s1 { color: #bcbec4;}
+.s2 { color: #6aab73;}
+.s3 { color: #cf8e6d;}
+.s4 { color: #bcbec4;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+AStar_Search_Manhattan[1].cpp</font>
+</center></td></tr></table>
+<pre><span class="s0">#include </span><span class="s2">&lt;iostream&gt;</span>
+<span class="s0">#include </span><span class="s2">&lt;vector&gt;</span>
+<span class="s0">#include </span><span class="s2">&lt;queue&gt;</span>
+<span class="s0">#include </span><span class="s2">&lt;unordered_set&gt;</span>
+<span class="s0">#include </span><span class="s2">&lt;sstream&gt;</span>
+<span class="s0">#include </span><span class="s2">&lt;chrono&gt;</span>
+
+<span class="s3">using namespace </span><span class="s1">std</span><span class="s4">;</span>
+<span class="s3">using namespace </span><span class="s1">chrono</span><span class="s4">;</span>
+
+<span class="s0">#define </span><span class="s1">N </span><span class="s5">3</span>
+
+<span class="s3">int </span><span class="s1">steps </span><span class="s4">= </span><span class="s5">0</span><span class="s4">;</span>
+<span class="s3">int </span><span class="s1">row</span><span class="s4">[] = {</span><span class="s5">1</span><span class="s4">, </span><span class="s5">0</span><span class="s4">, -</span><span class="s5">1</span><span class="s4">, </span><span class="s5">0</span><span class="s4">};</span>
+<span class="s3">int </span><span class="s1">col</span><span class="s4">[] = {</span><span class="s5">0</span><span class="s4">, -</span><span class="s5">1</span><span class="s4">, </span><span class="s5">0</span><span class="s4">, </span><span class="s5">1</span><span class="s4">};</span>
+
+<span class="s3">int </span><span class="s1">goalState</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">] = {</span>
+        <span class="s4">{</span><span class="s5">0</span><span class="s4">, </span><span class="s5">1</span><span class="s4">, </span><span class="s5">2</span><span class="s4">},</span>
+        <span class="s4">{</span><span class="s5">3</span><span class="s4">, </span><span class="s5">4</span><span class="s4">, </span><span class="s5">5</span><span class="s4">},</span>
+        <span class="s4">{</span><span class="s5">6</span><span class="s4">, </span><span class="s5">7</span><span class="s4">, </span><span class="s5">8</span><span class="s4">}</span>
+<span class="s4">};</span>
+
+<span class="s3">struct </span><span class="s1">PuzzleNode</span>
+<span class="s4">{</span>
+    <span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">parent</span><span class="s4">;</span>
+    <span class="s3">int </span><span class="s1">board</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">];</span>
+    <span class="s3">int </span><span class="s1">x</span><span class="s4">, </span><span class="s1">y</span><span class="s4">;</span>
+    <span class="s3">int </span><span class="s1">cost</span><span class="s4">;</span>
+    <span class="s3">int </span><span class="s1">level</span><span class="s4">;</span>
+<span class="s4">};</span>
+
+<span class="s3">int </span><span class="s1">printBoard</span><span class="s4">(</span><span class="s3">int </span><span class="s1">board</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">])</span>
+<span class="s4">{</span>
+    <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">i </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">i </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">i</span><span class="s4">++)</span>
+    <span class="s4">{</span>
+        <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">j </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">j </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">j</span><span class="s4">++)</span>
+            <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s1">board</span><span class="s4">[</span><span class="s1">i</span><span class="s4">][</span><span class="s1">j</span><span class="s4">] &lt;&lt; </span><span class="s2">&quot; &quot;</span><span class="s4">;</span>
+        <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s1">endl</span><span class="s4">;</span>
+    <span class="s4">}</span>
+    <span class="s3">return </span><span class="s5">0</span><span class="s4">;</span>
+<span class="s4">}</span>
+
+<span class="s3">int </span><span class="s1">calculateManhattanDistance</span><span class="s4">(</span><span class="s3">int </span><span class="s1">board</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">])</span>
+<span class="s4">{</span>
+    <span class="s3">int </span><span class="s1">totalDistance </span><span class="s4">= </span><span class="s5">0</span><span class="s4">;</span>
+
+    <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">i </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">i </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">i</span><span class="s4">++)</span>
+    <span class="s4">{</span>
+        <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">j </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">j </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">j</span><span class="s4">++)</span>
+        <span class="s4">{</span>
+            <span class="s3">int </span><span class="s1">value </span><span class="s4">= </span><span class="s1">board</span><span class="s4">[</span><span class="s1">i</span><span class="s4">][</span><span class="s1">j</span><span class="s4">];</span>
+
+            <span class="s3">if </span><span class="s4">(</span><span class="s1">value </span><span class="s4">!= </span><span class="s5">0</span><span class="s4">)</span>
+            <span class="s4">{</span>
+                <span class="s3">int </span><span class="s1">goalX</span><span class="s4">, </span><span class="s1">goalY</span><span class="s4">;</span>
+                <span class="s3">for </span><span class="s4">(</span><span class="s1">goalX </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">goalX </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">goalX</span><span class="s4">++)</span>
+                <span class="s4">{</span>
+                    <span class="s3">for </span><span class="s4">(</span><span class="s1">goalY </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">goalY </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">goalY</span><span class="s4">++)</span>
+                    <span class="s4">{</span>
+                        <span class="s3">if </span><span class="s4">(</span><span class="s1">goalState</span><span class="s4">[</span><span class="s1">goalX</span><span class="s4">][</span><span class="s1">goalY</span><span class="s4">] == </span><span class="s1">value</span><span class="s4">)</span>
+                            <span class="s3">break</span><span class="s4">;</span>
+                    <span class="s4">}</span>
+                <span class="s4">}</span>
+
+                <span class="s1">totalDistance </span><span class="s4">+= </span><span class="s1">abs</span><span class="s4">(</span><span class="s1">i </span><span class="s4">- </span><span class="s1">goalX</span><span class="s4">) + </span><span class="s1">abs</span><span class="s4">(</span><span class="s1">j </span><span class="s4">- </span><span class="s1">goalY</span><span class="s4">);</span>
+            <span class="s4">}</span>
+        <span class="s4">}</span>
+    <span class="s4">}</span>
+
+    <span class="s3">return </span><span class="s1">totalDistance</span><span class="s4">;</span>
+<span class="s4">}</span>
+
+<span class="s3">int </span><span class="s1">calculateCost</span><span class="s4">(</span><span class="s3">int </span><span class="s1">board</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">])</span>
+<span class="s4">{</span>
+    <span class="s3">return </span><span class="s1">calculateManhattanDistance</span><span class="s4">(</span><span class="s1">board</span><span class="s4">);</span>
+<span class="s4">}</span>
+
+<span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">createNode</span><span class="s4">(</span><span class="s3">int </span><span class="s1">board</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">], </span><span class="s3">int </span><span class="s1">x</span><span class="s4">, </span><span class="s3">int </span><span class="s1">y</span><span class="s4">, </span><span class="s3">int </span><span class="s1">newX</span><span class="s4">, </span><span class="s3">int </span><span class="s1">newY</span><span class="s4">, </span><span class="s3">int </span><span class="s1">level</span><span class="s4">, </span><span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">parent</span><span class="s4">)</span>
+<span class="s4">{</span>
+    <span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">node </span><span class="s4">= </span><span class="s3">new </span><span class="s1">PuzzleNode</span><span class="s4">;</span>
+    <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">parent </span><span class="s4">= </span><span class="s1">parent</span><span class="s4">;</span>
+
+    <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">i </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">i </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">i</span><span class="s4">++)</span>
+    <span class="s4">{</span>
+        <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">j </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">j </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">j</span><span class="s4">++)</span>
+        <span class="s4">{</span>
+            <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">[</span><span class="s1">i</span><span class="s4">][</span><span class="s1">j</span><span class="s4">] = </span><span class="s1">board</span><span class="s4">[</span><span class="s1">i</span><span class="s4">][</span><span class="s1">j</span><span class="s4">];</span>
+        <span class="s4">}</span>
+    <span class="s4">}</span>
+
+    <span class="s3">int </span><span class="s1">temp </span><span class="s4">= </span><span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">[</span><span class="s1">x</span><span class="s4">][</span><span class="s1">y</span><span class="s4">];</span>
+    <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">[</span><span class="s1">x</span><span class="s4">][</span><span class="s1">y</span><span class="s4">] = </span><span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">[</span><span class="s1">newX</span><span class="s4">][</span><span class="s1">newY</span><span class="s4">];</span>
+    <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">[</span><span class="s1">newX</span><span class="s4">][</span><span class="s1">newY</span><span class="s4">] = </span><span class="s1">temp</span><span class="s4">;</span>
+
+    <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">level </span><span class="s4">= </span><span class="s1">level</span><span class="s4">;</span>
+    <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">cost </span><span class="s4">= </span><span class="s1">calculateCost</span><span class="s4">(</span><span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">) + </span><span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">level</span><span class="s4">;</span>
+    <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">x </span><span class="s4">= </span><span class="s1">newX</span><span class="s4">;</span>
+    <span class="s1">node</span><span class="s4">-&gt;</span><span class="s1">y </span><span class="s4">= </span><span class="s1">newY</span><span class="s4">;</span>
+
+    <span class="s3">return </span><span class="s1">node</span><span class="s4">;</span>
+<span class="s4">}</span>
+
+<span class="s3">bool </span><span class="s1">isWithinLimits</span><span class="s4">(</span><span class="s3">int </span><span class="s1">x</span><span class="s4">, </span><span class="s3">int </span><span class="s1">y</span><span class="s4">)</span>
+<span class="s4">{</span>
+    <span class="s3">return </span><span class="s4">(</span><span class="s1">x </span><span class="s4">&gt;= </span><span class="s5">0 </span><span class="s4">&amp;&amp; </span><span class="s1">x </span><span class="s4">&lt; </span><span class="s1">N </span><span class="s4">&amp;&amp; </span><span class="s1">y </span><span class="s4">&gt;= </span><span class="s5">0 </span><span class="s4">&amp;&amp; </span><span class="s1">y </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">);</span>
+<span class="s4">}</span>
+
+<span class="s3">void </span><span class="s1">displaySolution</span><span class="s4">(</span><span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">root</span><span class="s4">)</span>
+<span class="s4">{</span>
+    <span class="s3">if </span><span class="s4">(</span><span class="s1">root </span><span class="s4">== </span><span class="s1">NULL</span><span class="s4">)</span>
+        <span class="s3">return</span><span class="s4">;</span>
+    <span class="s1">displaySolution</span><span class="s4">(</span><span class="s1">root</span><span class="s4">-&gt;</span><span class="s1">parent</span><span class="s4">);</span>
+    <span class="s1">printBoard</span><span class="s4">(</span><span class="s1">root</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">);</span>
+    <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s1">endl</span><span class="s4">;</span>
+<span class="s4">}</span>
+
+<span class="s3">struct </span><span class="s1">CompareNodes</span>
+<span class="s4">{</span>
+    <span class="s3">bool operator</span><span class="s4">()(</span><span class="s3">const </span><span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">lhs</span><span class="s4">, </span><span class="s3">const </span><span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">rhs</span><span class="s4">) </span><span class="s3">const</span>
+    <span class="s4">{</span>
+        <span class="s3">return </span><span class="s1">lhs</span><span class="s4">-&gt;</span><span class="s1">cost </span><span class="s4">&gt; </span><span class="s1">rhs</span><span class="s4">-&gt;</span><span class="s1">cost</span><span class="s4">;</span>
+    <span class="s4">}</span>
+<span class="s4">};</span>
+
+<span class="s1">string boardToString</span><span class="s4">(</span><span class="s3">int </span><span class="s1">board</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">])</span>
+<span class="s4">{</span>
+    <span class="s1">ostringstream oss</span><span class="s4">;</span>
+    <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">i </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">i </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">i</span><span class="s4">++)</span>
+    <span class="s4">{</span>
+        <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">j </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">j </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">j</span><span class="s4">++)</span>
+        <span class="s4">{</span>
+            <span class="s1">oss </span><span class="s4">&lt;&lt; </span><span class="s1">board</span><span class="s4">[</span><span class="s1">i</span><span class="s4">][</span><span class="s1">j</span><span class="s4">] &lt;&lt; </span><span class="s2">&quot; &quot;</span><span class="s4">;</span>
+        <span class="s4">}</span>
+    <span class="s4">}</span>
+    <span class="s3">return </span><span class="s1">oss</span><span class="s4">.</span><span class="s1">str</span><span class="s4">();</span>
+<span class="s4">}</span>
+
+<span class="s3">void </span><span class="s1">solvePuzzle</span><span class="s4">(</span><span class="s3">int </span><span class="s1">initial</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">], </span><span class="s3">int </span><span class="s1">startX</span><span class="s4">, </span><span class="s3">int </span><span class="s1">startY</span><span class="s4">)</span>
+<span class="s4">{</span>
+    <span class="s3">auto </span><span class="s1">startTime </span><span class="s4">= </span><span class="s1">high_resolution_clock</span><span class="s4">::</span><span class="s1">now</span><span class="s4">();</span>
+
+    <span class="s1">priority_queue</span><span class="s4">&lt;</span><span class="s1">PuzzleNode </span><span class="s4">*, </span><span class="s1">vector</span><span class="s4">&lt;</span><span class="s1">PuzzleNode </span><span class="s4">*&gt;, </span><span class="s1">CompareNodes</span><span class="s4">&gt; </span><span class="s1">pq</span><span class="s4">;</span>
+    <span class="s1">unordered_set</span><span class="s4">&lt;</span><span class="s1">string</span><span class="s4">&gt; </span><span class="s1">visited</span><span class="s4">;</span>
+
+    <span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">root </span><span class="s4">= </span><span class="s1">createNode</span><span class="s4">(</span><span class="s1">initial</span><span class="s4">, </span><span class="s1">startX</span><span class="s4">, </span><span class="s1">startY</span><span class="s4">, </span><span class="s1">startX</span><span class="s4">, </span><span class="s1">startY</span><span class="s4">, </span><span class="s5">0</span><span class="s4">, </span><span class="s1">NULL</span><span class="s4">);</span>
+    <span class="s1">root</span><span class="s4">-&gt;</span><span class="s1">cost </span><span class="s4">= </span><span class="s1">calculateManhattanDistance</span><span class="s4">(</span><span class="s1">initial</span><span class="s4">) + </span><span class="s1">root</span><span class="s4">-&gt;</span><span class="s1">level</span><span class="s4">;</span>
+    <span class="s1">pq</span><span class="s4">.</span><span class="s1">push</span><span class="s4">(</span><span class="s1">root</span><span class="s4">);</span>
+
+    <span class="s3">while </span><span class="s4">(!</span><span class="s1">pq</span><span class="s4">.</span><span class="s1">empty</span><span class="s4">())</span>
+    <span class="s4">{</span>
+        <span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">min </span><span class="s4">= </span><span class="s1">pq</span><span class="s4">.</span><span class="s1">top</span><span class="s4">();</span>
+        <span class="s1">pq</span><span class="s4">.</span><span class="s1">pop</span><span class="s4">();</span>
+
+        <span class="s3">if </span><span class="s4">(</span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">cost </span><span class="s4">== </span><span class="s5">0</span><span class="s4">)</span>
+        <span class="s4">{</span>
+            <span class="s3">auto </span><span class="s1">endTime </span><span class="s4">= </span><span class="s1">high_resolution_clock</span><span class="s4">::</span><span class="s1">now</span><span class="s4">();</span>
+            <span class="s3">auto </span><span class="s1">duration </span><span class="s4">= </span><span class="s1">duration_cast</span><span class="s4">&lt;</span><span class="s1">milliseconds</span><span class="s4">&gt;(</span><span class="s1">endTime </span><span class="s4">- </span><span class="s1">startTime</span><span class="s4">);</span>
+
+            <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;Goal state reached in &quot; </span><span class="s4">&lt;&lt; </span><span class="s1">steps </span><span class="s4">&lt;&lt; </span><span class="s2">&quot; steps.</span><span class="s3">\n</span><span class="s2">&quot;</span><span class="s4">;</span>
+            <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;Time taken: &quot; </span><span class="s4">&lt;&lt; </span><span class="s1">duration</span><span class="s4">.</span><span class="s1">count</span><span class="s4">() &lt;&lt; </span><span class="s2">&quot; milliseconds</span><span class="s3">\n</span><span class="s2">&quot;</span><span class="s4">;</span>
+            <span class="s1">displaySolution</span><span class="s4">(</span><span class="s1">min</span><span class="s4">);</span>
+            <span class="s3">return</span><span class="s4">;</span>
+        <span class="s4">}</span>
+
+        <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">i </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">i </span><span class="s4">&lt; </span><span class="s5">4</span><span class="s4">; </span><span class="s1">i</span><span class="s4">++)</span>
+        <span class="s4">{</span>
+            <span class="s3">if </span><span class="s4">(</span><span class="s1">isWithinLimits</span><span class="s4">(</span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">x </span><span class="s4">+ </span><span class="s1">row</span><span class="s4">[</span><span class="s1">i</span><span class="s4">], </span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">y </span><span class="s4">+ </span><span class="s1">col</span><span class="s4">[</span><span class="s1">i</span><span class="s4">]))</span>
+            <span class="s4">{</span>
+                <span class="s1">PuzzleNode </span><span class="s4">*</span><span class="s1">child </span><span class="s4">= </span><span class="s1">createNode</span><span class="s4">(</span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">, </span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">x</span><span class="s4">, </span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">y</span><span class="s4">, </span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">x </span><span class="s4">+ </span><span class="s1">row</span><span class="s4">[</span><span class="s1">i</span><span class="s4">], </span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">y </span><span class="s4">+ </span><span class="s1">col</span><span class="s4">[</span><span class="s1">i</span><span class="s4">], </span><span class="s1">min</span><span class="s4">-&gt;</span><span class="s1">level </span><span class="s4">+ </span><span class="s5">1</span><span class="s4">, </span><span class="s1">min</span><span class="s4">);</span>
+                <span class="s1">child</span><span class="s4">-&gt;</span><span class="s1">cost </span><span class="s4">= </span><span class="s1">calculateManhattanDistance</span><span class="s4">(</span><span class="s1">child</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">) + </span><span class="s1">child</span><span class="s4">-&gt;</span><span class="s1">level</span><span class="s4">;</span>
+
+                <span class="s3">if </span><span class="s4">(</span><span class="s1">visited</span><span class="s4">.</span><span class="s1">find</span><span class="s4">(</span><span class="s1">boardToString</span><span class="s4">(</span><span class="s1">child</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">)) == </span><span class="s1">visited</span><span class="s4">.</span><span class="s1">end</span><span class="s4">())</span>
+                <span class="s4">{</span>
+                    <span class="s1">pq</span><span class="s4">.</span><span class="s1">push</span><span class="s4">(</span><span class="s1">child</span><span class="s4">);</span>
+                    <span class="s1">visited</span><span class="s4">.</span><span class="s1">insert</span><span class="s4">(</span><span class="s1">boardToString</span><span class="s4">(</span><span class="s1">child</span><span class="s4">-&gt;</span><span class="s1">board</span><span class="s4">));</span>
+                    <span class="s1">steps</span><span class="s4">++;</span>
+                <span class="s4">}</span>
+            <span class="s4">}</span>
+        <span class="s4">}</span>
+    <span class="s4">}</span>
+<span class="s4">}</span>
+
+<span class="s3">int </span><span class="s1">main</span><span class="s4">()</span>
+<span class="s4">{</span>
+    <span class="s3">int </span><span class="s1">initial</span><span class="s4">[</span><span class="s1">N</span><span class="s4">][</span><span class="s1">N</span><span class="s4">];</span>
+
+    <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;</span><span class="s3">\n\t\t</span><span class="s2">----------------------------------------------------------------------------</span><span class="s3">\n</span><span class="s2">&quot;</span><span class="s4">;</span>
+    <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;Enter the initial state of the puzzle in this form </span><span class="s3">\n</span><span class="s2">&quot;</span><span class="s4">;</span>
+    <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;*** 2 3 1 5 6 0 8 4 7 ***</span><span class="s3">\n</span><span class="s2">&gt;&gt; &quot;</span><span class="s4">;</span>
+
+    <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">i </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">i </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">i</span><span class="s4">++)</span>
+        <span class="s3">for </span><span class="s4">(</span><span class="s3">int </span><span class="s1">j </span><span class="s4">= </span><span class="s5">0</span><span class="s4">; </span><span class="s1">j </span><span class="s4">&lt; </span><span class="s1">N</span><span class="s4">; </span><span class="s1">j</span><span class="s4">++)</span>
+            <span class="s1">cin </span><span class="s4">&gt;&gt; </span><span class="s1">initial</span><span class="s4">[</span><span class="s1">i</span><span class="s4">][</span><span class="s1">j</span><span class="s4">];</span>
+
+    <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;The initial puzzle entered is:  </span><span class="s3">\n</span><span class="s2">&gt;&gt; &quot;</span><span class="s4">;</span>
+    <span class="s1">printBoard</span><span class="s4">(</span><span class="s1">initial</span><span class="s4">);</span>
+    <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;</span><span class="s3">\n\t\t</span><span class="s2">----------------------------------------------------------------------------</span><span class="s3">\n</span><span class="s2">&quot;</span><span class="s4">;</span>
+    <span class="s1">cout </span><span class="s4">&lt;&lt; </span><span class="s2">&quot;The puzzle is being solved  </span><span class="s3">\n</span><span class="s2">&gt;&gt; &quot;</span><span class="s4">;</span>
+
+    <span class="s3">int </span><span class="s1">startX </span><span class="s4">= </span><span class="s5">1</span><span class="s4">, </span><span class="s1">startY </span><span class="s4">= </span><span class="s5">2</span><span class="s4">;</span>
+
+    <span class="s1">solvePuzzle</span><span class="s4">(</span><span class="s1">initial</span><span class="s4">, </span><span class="s1">startX</span><span class="s4">, </span><span class="s1">startY</span><span class="s4">);</span>
+
+    <span class="s3">return </span><span class="s5">0</span><span class="s4">;</span>
+<span class="s4">}</span>
+</pre>
+</body>
+</html>
